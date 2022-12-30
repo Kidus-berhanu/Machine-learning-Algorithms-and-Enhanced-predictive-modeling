@@ -1,0 +1,37 @@
+# Import necessary libraries
+import numpy as np
+import tensorflow as tf
+from tensorflow import keras
+
+# Load the fruit dataset
+X = np.load("fruit_images.npy")
+y = np.load("fruit_labels.npy")
+
+# Preprocess the data by rescaling the images and converting the labels to one-hot encoding
+X = X / 255.0
+y = keras.utils.to_categorical(y)
+
+# Split the data into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
+# Build the model using a CNN architecture
+model = keras.Sequential()
+model.add(keras.layers.Conv2D(32, (3, 3), activation="relu", input_shape=(100, 100, 3)))
+model.add(keras.layers.MaxPooling2D((2, 2)))
+model.add(keras.layers.Conv2D(64, (3, 3), activation="relu"))
+model.add(keras.layers.MaxPooling2D((2, 2)))
+model.add(keras.layers.Conv2D(64, (3, 3), activation="relu"))
+model.add(keras.layers.Flatten())
+model.add(keras.layers.Dense(64, activation="relu"))
+model.add(keras.layers.Dense(10, activation="softmax"))
+
+# Compile the model with an Adam optimizer and categorical cross-entropy loss
+model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
+
+# Train the model on the training data
+model.fit(X_train, y_train, epochs=10, validation_data=(X_test, y_test))
+
+# Evaluate the model on the test data
+test_loss, test_acc = model.evaluate(X_test, y_test)
+print("Test loss:", test_loss)
+print("Test accuracy:", test_acc)
