@@ -1,0 +1,90 @@
+# Import necessary libraries
+import numpy as np
+import tensorflow as tf
+from tensorflow import keras
+from sklearn.model_selection import train_test_split
+from keras.preprocessing.image import ImageDataGenerator
+from keras.callbacks import LearningRateScheduler, EarlyStopping
+
+# Load the fruit dataset
+X = np.load("fruit_images.npy")
+y = np.load("fruit_labels.npy")
+
+# Preprocess the data by rescaling the images and converting the labels to one-hot encoding
+X = X / 255.0
+y = keras.utils.to_categorical(y)
+
+# Split the data into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
+# Create a data generator for data augmentation
+data_generator = ImageDataGenerator(rotation_range=30,
+                                   width_shift_range=0.2,
+                                   height_shift_range=0.2,
+                                   horizontal_flip=True)
+
+# Define a learning rate schedule
+def lr_schedule(epoch):
+    if epoch < 5:
+        return 0.001
+    elif epoch < 10:
+        return 0.0001
+    else:
+        return 0.00001
+
+# Create a learning rate scheduler callback
+lr_scheduler = LearningRateScheduler(lr_schedule)
+
+# Create an early stopping callback
+early_stopping = EarlyStopping(monitor='val_loss', patience=5)
+
+# Build the model using a CNN architecture
+model = keras.Sequential()
+model.add(keras.layers.Conv2D(32, (3, 3), activation="relu", input_shape=(100, 100, 3)))
+model.add(keras.layers.MaxPooling2D((2, 2)))
+model.add(keras.layers.Conv2D(64, (3, 3), activation="relu"))
+model.add(keras.layers.MaxPooling2D((2, 2)))
+model.add(keras.layers.Conv2D(64, (3, 3), activation="relu"))
+model.add(keras.layers.Flatten())
+model.add(keras.layers.Dense(64, activation="relu"))
+model.add(keras.layers.Dense(10, activation="softmax"))
+
+# Compile the model with an Adam optimizer and categorical cross-entropy loss
+model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy", "precision", "recall", "f1_score"])
+
+# Train the model on the training data using data augmentation and the learning rate scheduler
+model.fit(data_generator.flow(X_train, y_train),
+          epochs=10,
+          validation_data=(X_test, y_test),
+          callbacks=[lr_scheduler, early_stopping])
+# Evaluate the model on the test data
+test_loss, test_acc, test_precision, test_recall, test_f1 = model.evaluate(X_test, y_test)
+
+# Print the results
+print("Test loss:", test_loss)
+print("Test accuracy:", test_acc)
+print("Test precision:", test_precision)
+print("Test recall:", test_recall)
+print("Test F1 score:", test_f1)
+#Evaluate the model on the test data
+#test_loss, test_acc, test_precision, test_recall, test_f1_score = model.evaluate(X_test, y_test)
+#print("Test loss:", test_loss)
+#print("Test accuracy:", test_acc)
+#print("Test precision:", test_precision)
+#print("Test recall:", test_recall)
+#print("Test F1 score:", test_f1_score)
+
+#Make predictions on the test data
+#predictions = model.predict(X_test)
+#predicted_labels = np.argmax(predictions, axis=1)
+#true_labels = np.argmax(y_test, axis=1)
+
+#Calculate the confusion matrix
+#confusion_matrix = confusion_matrix(true_labels, predicted_labels)
+#print("Confusion matrix:")
+#print(confusion_matrix)
+
+#Plot the confusion matrix
+#plt.figure(figsize=(10, 10))
+#plot_confusion_matrix(confusion_matrix, classes=class_names, normalize=True, title="Normalized confusion matrix")
+#plt.show()
