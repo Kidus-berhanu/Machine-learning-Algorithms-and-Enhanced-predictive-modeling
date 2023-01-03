@@ -1,0 +1,54 @@
+#KIDUS BERHANU
+# Data configuration
+training_set_folder = './fruits-360/Training_smaller'
+test_set_folder     = './fruits-360/Test_smaller'
+
+# Model configuration
+batch_size = 25
+img_width, img_height, img_num_channels = 25, 25, 3
+loss_function = sparse_categorical_crossentropy
+no_classes = 10
+no_epochs = 25
+optimizer = Adam()
+verbosity = 1
+
+# Determine shape of the data
+input_shape = (img_width, img_height, img_num_channels)
+
+# Create a generator
+train_datagen = ImageDataGenerator(
+  rescale=1./255
+)
+train_datagen = train_datagen.flow_from_directory(
+        training_set_folder,
+        save_to_dir='./adapted-images',
+        save_format='jpeg',
+        batch_size=batch_size,
+        target_size=(25, 25),
+        class_mode='sparse')
+
+# Define model architecture
+model = Sequential()
+model.add(InputLayer(input_shape=input_shape))
+model.add(Conv2D(32, kernel_size=(3, 3), activation='relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Flatten())
+model.add(Dense(128, activation='relu'))
+model.add(Dense(no_classes, activation='softmax'))
+
+# Compile model
+model.compile(loss=loss_function,
+              optimizer=optimizer,
+              metrics=['accuracy'])
+
+# Train model
+model.fit(
+        train_datagen,
+        epochs=no_epochs,
+        verbose=verbosity)
+
+# Evaluate model on test data
+_, acc = model.evaluate(test_datagen, verbose=0)
+print('> %.3f' % (acc * 100.0))
