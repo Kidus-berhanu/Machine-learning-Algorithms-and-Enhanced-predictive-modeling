@@ -1,16 +1,21 @@
 import pandas as pd
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.impute import SimpleImputer
 from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score
+from sklearn.metrics import silhouette_score, adjusted_rand_score, adjusted_mutual_info_score
 import matplotlib.pyplot as plt
 
 def main():
   # Read in fruit data from CSV file
   fruit_data = pd.read_csv("fruit_data.csv")
 
-  # Extract fruit characteristics (X) and fruit labels (y)
-  X = fruit_data[["color", "diameter", "weight"]]
-  y = fruit_data["fruit"]
+  # Handle missing values
+  imputer = SimpleImputer(strategy="most_frequent")
+  X = imputer.fit_transform(fruit_data[["color", "diameter", "weight"]])
+
+  # Encode categorical variables
+  encoder = OneHotEncoder()
+  y = encoder.fit_transform(fruit_data[["fruit"]])
 
   # Standardize the data
   scaler = StandardScaler()
@@ -28,11 +33,7 @@ def main():
     print(f"{y[i]}: {predictions[i]}")
 
   # Evaluate model performance
-  print(f"Model performance: {evaluate_model(X_scaled, predictions)}")
-
-  # Visualize fruit data and clusters
-  plt.scatter(X_scaled[:, 0], X_scaled[:, 1], c=predictions)
-  plt.show()
-
-  # Print cluster centers and number of samples in each cluster
-  print("Cluster centers:
+  performance = evaluate_model(X_scaled, predictions, y)
+  print(f"Model performance:")
+  for metric, value in performance.items():
+    print(f"  {metric}: {value:.3f}
