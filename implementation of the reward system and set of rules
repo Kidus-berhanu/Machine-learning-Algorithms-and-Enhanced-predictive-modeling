@@ -1,0 +1,59 @@
+import numpy as np
+
+# Fruit class
+class Fruit:
+    def __init__(self, name, reward, maze_location):
+        self.name = name
+        self.reward = reward
+        self.maze_location = maze_location
+
+# Maze class
+class Maze:
+    def __init__(self, fruit_list, maze_size):
+        self.fruit_list = fruit_list
+        self.maze_size = maze_size
+        self.reset()
+        
+    def reset(self):
+        self.current_location = [0, 0]
+        self.maze = np.zeros(self.maze_size)
+        for fruit in self.fruit_list:
+            self.maze[fruit.maze_location[0], fruit.maze_location[1]] = fruit.reward
+            
+    def move(self, direction):
+        if direction == 'up':
+            self.current_location[0] -= 1
+        elif direction == 'down':
+            self.current_location[0] += 1
+        elif direction == 'left':
+            self.current_location[1] -= 1
+        elif direction == 'right':
+            self.current_location[1] += 1
+        else:
+            raise ValueError("Invalid direction")
+            
+    def get_reward(self):
+        if self.current_location[0] < 0 or self.current_location[0] >= self.maze_size[0] or self.current_location[1] < 0 or self.current_location[1] >= self.maze_size[1]:
+            return -1
+        return self.maze[self.current_location[0], self.current_location[1]]
+    
+    def is_done(self):
+        return self.current_location[0] < 0 or self.current_location[0] >= self.maze_size[0] or self.current_location[1] < 0 or self.current_location[1] >= self.maze_size[1]
+    
+# Q-Learning class
+class QLearning:
+    def __init__(self, maze, alpha, gamma, epsilon):
+        self.maze = maze
+        self.q_table = np.zeros((maze.maze_size[0], maze.maze_size[1], 4))
+        self.alpha = alpha
+        self.gamma = gamma
+        self.epsilon = epsilon
+        
+    def choose_action(self):
+        if np.random.uniform(0, 1) < self.epsilon:
+            return np.random.randint(0, 4)
+        else:
+            return np.argmax(self.q_table[self.maze.current_location[0], self.maze.current_location[1]])
+        
+    def learn(self, current_reward, next_reward):
+        current_q = self.q_table[self.maze.current_location[0],
