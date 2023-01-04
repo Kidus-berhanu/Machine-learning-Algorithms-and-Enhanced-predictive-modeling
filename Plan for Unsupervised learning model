@@ -1,0 +1,38 @@
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+import matplotlib.pyplot as plt
+
+def main():
+  # Read in fruit data from CSV file
+  fruit_data = pd.read_csv("fruit_data.csv")
+
+  # Extract fruit characteristics (X) and fruit labels (y)
+  X = fruit_data[["color", "diameter", "weight"]]
+  y = fruit_data["fruit"]
+
+  # Standardize the data
+  scaler = StandardScaler()
+  X_scaled = scaler.fit_transform(X)
+
+  # Train KMeans clustering model
+  kmeans = KMeans(n_clusters=3)
+  kmeans.fit(X_scaled)
+
+  # Predict fruit clusters
+  predictions = kmeans.predict(X_scaled)
+
+  # Print fruit labels and predicted clusters
+  for i in range(len(y)):
+    print(f"{y[i]}: {predictions[i]}")
+
+  # Evaluate model performance
+  print(f"Model performance: {evaluate_model(X_scaled, predictions)}")
+
+  # Visualize fruit data and clusters
+  plt.scatter(X_scaled[:, 0], X_scaled[:, 1], c=predictions)
+  plt.show()
+
+  # Print cluster centers and number of samples in each cluster
+  print("Cluster centers:
