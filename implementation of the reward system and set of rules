@@ -55,5 +55,6 @@ class QLearning:
         else:
             return np.argmax(self.q_table[self.maze.current_location[0], self.maze.current_location[1]])
         
-    def learn(self, current_reward, next_reward):
-        current_q = self.q_table[self.maze.current_location[0],
+    def update_q(self, current_reward, next_reward, action):
+        current_q = self.q_table[self.maze.current_location[0], self.maze.current_location[1], action]
+        next_q = np.max(self.q_table[self.maze.
