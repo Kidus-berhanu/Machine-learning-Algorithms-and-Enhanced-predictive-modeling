@@ -1,3 +1,4 @@
+#Kidus Berhanu
 # Import necessary libraries
 import numpy as np
 import tensorflow as tf
@@ -88,3 +89,57 @@ print("Test F1 score:", test_f1)
 #plt.figure(figsize=(10, 10))
 #plot_confusion_matrix(confusion_matrix, classes=class_names, normalize=True, title="Normalized confusion matrix")
 #plt.show()
+
+
+
+def load_dataset(images_file, labels_file):
+    # Load the images and labels
+    X = np.load(images_file)
+    y = np.load(labels_file)
+
+    # Preprocess the data by rescaling the images and converting the labels to one-hot encoding
+    X = X / 255.0
+    y = keras.utils.to_categorical(y)
+
+    return X, y
+
+# Load the dataset
+X, y = load_dataset("fruit_images.npy", "fruit_labels.npy")
+
+
+
+def split_data(X, y, test_size):
+    # Split the data into training and test sets
+    return train_test_split(X, y, test_size=test_size)
+
+# Split the data
+X_train, X_test, y_train, y_test = split_data(X, y, test_size=0.2)
+
+#A function to create a model with a Residual Network (ResNet) architecture:
+def create_resnet_model(input_shape, num_classes):
+    def resnet_block(inputs, filters, kernel_size, strides):
+        x = keras.layers.Conv2D(filters, kernel_size, strides=strides, padding="same", use_bias=False)(inputs)
+        x = keras.layers.BatchNormalization()(x)
+        x = keras.layers.Activation("relu")(x)
+        x = keras.layers.Conv2D(filters, kernel_size, strides=1, padding="same", use_bias=False)(x)
+        x = keras.layers.BatchNormalization()(x)
+        x = keras.layers.Add()([x, inputs])
+        x = keras.layers.Activation("relu")(x)
+        return x
+
+    inputs = keras.layers.Input(shape=input_shape)
+    x = keras.layers.Conv2D(32, 3, strides=1, padding="same", use_bias=False)(inputs)
+    x = keras.layers.BatchNormalization()(x)
+    x = keras.layers.Activation("relu")(x)
+    x = resnet_block(x, 32, 3, 1)
+    x = resnet_block(x, 32, 3, 1)
+    x = resnet_block(x, 32, 3, 2)
+    x = resnet_block(x, 64, 3, 1)
+    x = resnet_block(x, 64, 3, 1)
+    x = resnet_block(x, 64, 3, 2)
+    x = resnet_block(x, 128, 3, 1)
+    x = resnet_block(x, 128, 3, 1)
+    x = resnet_block(x, 128, 3, 2)
+    x = keras
+
+
