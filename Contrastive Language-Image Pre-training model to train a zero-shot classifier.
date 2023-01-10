@@ -1,0 +1,79 @@
+#kidus berhanu
+import numpy as np
+import torch
+import clip
+from tqdm.notebook import tqdm
+from pkg_resources import packaging
+
+print("Torch version:", torch.__version__)
+clip.available_models()
+
+# Load the CLIP model
+model, preprocess = clip.load("ViT-B/32")
+
+# Define the fruit classes and the characteristics of each class
+fruit_classes = ["apple", "banana", "orange", "strawberry"]
+fruit_characteristics = [
+    "an apple is round and red.",
+    "a banana is long and yellow.",
+    "an orange is round and orange.",
+    "a strawberry is small and red."
+]
+
+# Tokenize and embed the fruit characteristics using the text encoder of the CLIP model
+with torch.no_grad():
+    fruit_characteristics_embeddings = model.encode_text(clip.tokenize(fruit_characteristics)).cuda()
+    fruit_characteristics_embeddings /= fruit_characteristics_embeddings.norm(dim=-1, keepdim=True)
+
+# place to put the  a dataset of fruit images and their corresponding labels
+# using the fruit 360 data set and add it to the script
+
+
+# Define the transform function to preprocess the images
+preprocess = transforms.Compose([
+    transforms.Resize((input_resolution, input_resolution)),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+])
+
+# Download and load the Fruits-360 dataset
+dataset = datasets.ImageFolder(root='path/to/fruits-360/dataset', transform=preprocess)
+
+# Create a data loader for the dataset
+loader = torch.utils.data.DataLoader(dataset, batch_size=32, num_workers=2)
+
+
+# Create a data loader for the dataset
+loader = torch.utils.data.DataLoader(dataset, batch_size=32, num_workers=2)
+
+# Define a simple supervised learning model
+class FruitClassifier(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.image_encoder = model.visual.encoder
+        self.fc = torch.nn.Linear(fruit_characteristics_embeddings.size(1), len(fruit_classes))
+
+    def forward(self, images):
+        image_features = self.image_encoder(images)
+        logits = self.fc(image_features @ fruit_characteristics_embeddings.t())
+        return logits
+
+# Create an instance of the fruit classifier and move it to the GPU
+fruit_classifier = FruitClassifier().cuda()
+
+# Define a loss function and an optimizer
+loss_fn = torch.nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(fruit_classifier.parameters())
+
+# Train the fruit classifier
+for epoch in range(10):
+    for i, (images, labels) in enumerate(tqdm(loader)):
+        images = images.cuda()
+        labels = labels.cuda()
+
+        logits = fruit_classifier(images)
+        loss = loss_fn(logits, labels)
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
