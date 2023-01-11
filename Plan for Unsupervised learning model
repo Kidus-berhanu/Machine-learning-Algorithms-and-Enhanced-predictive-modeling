@@ -9,7 +9,7 @@ def main():
   # Read in fruit data from CSV file
   fruit_data = pd.read_csv("fruit_data.csv")
 
-  # Handle missing values
+  # Handle missing valuesx
   imputer = SimpleImputer(strategy="most_frequent")
   X = imputer.fit_transform(fruit_data[["color", "diameter", "weight"]])
 
