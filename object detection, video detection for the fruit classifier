@@ -1,0 +1,97 @@
+import cv2
+import numpy as np
+import keras
+from keras.applications import ResNet50, InceptionV3, VGG16, MobileNetV2
+from keras.preprocessing import image
+from keras.applications.resnet50 import preprocess_input
+from keras.applications.inception_v3 import decode_predictions
+from keras.applications.vgg16 import VGG16
+from keras.applications.mobilenet_v2 import preprocess_input
+from keras.models import load_model
+import tensorflow as tf
+from object_detection.utils import label_map_util
+from object_detection.utils import visualization_utils as vis_util
+
+# Define the list of state-of-the-art models
+models = {"ResNet50": ResNet50(weights='imagenet'),
+          "InceptionV3": InceptionV3(weights='imagenet'),
+          "VGG16": VGG16(weights='imagenet'),
+          "MobileNetV2": MobileNetV2(weights='imagenet')}
+
+# Function for image prediction
+def image_predict(model_name, img_path):
+    # Load the image
+    img = image.load_img(img_path, target_size=(224, 224))
+    x = image.img_to_array(img)
+    x = np.expand_dims(x, axis=0)
+    x = preprocess_input(x)
+    # Get the model
+    model = models[model_name]
+    # Make the prediction
+    preds = model.predict(x)
+    return decode_predictions(preds, top=3)[0]
+
+# this is a  Function for object detection purposes
+def object_detection(img_path):
+    # Read the image
+    image_np = cv2.imread(img_path)
+    # Get the models
+    detection_graph = tf.Graph()
+    with detection_graph.as_default():
+        od_graph_def = tf.compat.v1.GraphDef()
+        with tf.compat.v2.io.gfile.GFile('frozen_inference_graph.pb', 'rb') as fid:
+            serialized_graph = fid.read()
+            od_graph_def.ParseFromString(serialized_graph)
+            tf.import_graph_def(od_graph_def, name='')
+    label_map = label_map_util.load_labelmap('label_map.pbtxt')
+    categories = label_map_util.convert_label_map_to_categories(label_map, max_num_classes=90, use_display_name=True)
+    category_index = label_map_util.create_category_index(categories)
+    with detection_graph.as_default():
+        with tf.compat.v1.Session(graph=detection_graph) as sess:
+            image_tensor = detection_graph.get_tensor_by_name('image_tensor:0')
+boxes = detection_graph.get_tensor_by_name('detection_boxes:0')
+scores = detection_graph.get_tensor_by_name('detection_scores:0')
+classes = detection_graph.get_tensor_by_name('detection_classes:0')
+num_detections = detection_graph.get_tensor_by_name('num_detections:0')
+image_np_expanded = np.expand_dims(image_np, axis=0)
+(boxes, scores, classes, num_detections) = sess.run(
+[boxes, scores, classes, num_detections],
+feed_dict={image_tensor: image_np_expanded})
+vis_util.visualize_boxes_and_labels_on_image_array(
+image_np,
+np.squeeze(boxes),
+np.squeeze(classes).astype(np.int32),
+np.squeeze(scores),
+category_index,
+use_normalized_coordinates=True,
+min_score_thresh=0.5)
+return image_np
+
+# this is a Function for video object tracking
+def video_object_tracking(input_video_path, output_video_path):
+# Read the video
+cap = cv2.VideoCapture(input_video_path)
+# Get the video dimensions
+video_width = int(cap.get(3))
+video_height = int(cap.get(4))
+# Define the codec and create the output video
+fourcc = cv2.VideoWriter_fourcc(*'XVID')
+out = cv2.VideoWriter(output_video_path, fourcc, 20.0, (video_width, video_height))
+# Define the object detection model
+detection_graph = tf.Graph()
+with detection_graph.as_default():
+od_graph_def = tf.compat.v1.GraphDef()
+with tf.compat.v2.io.gfile.GFile('frozen_inference_graph.pb', 'rb') as fid:
+serialized_graph = fid.read()
+od_graph_def.ParseFromString(serialized_graph)
+tf.import_graph_def(od_graph_def, name='')
+label_map = label_map_util.load_labelmap('label_map.pbtxt')
+categories = label_map_util.convert_label_map_to_categories(label_map, max_num_classes=90, use_display_name=True)
+category_index = label_map_util.create_category_index(categories)
+with detection_graph.as_default():
+with tf.compat.v1.Session(graph=detection_graph) as sess:
+while(True):
+ret, frame = cap.read()
+if ret == True:
+image_np_expanded = np.expand_dims(frame, axis=0)
+(boxes, scores, classes, num_detections) = s
