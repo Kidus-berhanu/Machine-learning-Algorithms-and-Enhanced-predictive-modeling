@@ -18,3 +18,7 @@ We use PyTest for unit testing and pre-commit for static checks. Make sure your 
 Thank you for your contributions to the Machine-learning-Algorithms-and-Enhanced-predictive-modeling project!# Machine-learning-Algorithms-and-Enhanced-predictive-modeling
 Machine learning:Algorithms and Enhanced predictive modeling
 if you have any question about the above code feel free to reach out  or leave a comment here:)
+
+![image](https://user-images.githubusercontent.com/107410165/213894804-c3af5888-64ff-4bcc-964f-95416b5c347b.png)
+![image](https://user-images.githubusercontent.com/107410165/213894829-5c05680a-b754-49f9-88ef-3731fbd47406.png)
+
