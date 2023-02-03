@@ -1,0 +1,102 @@
+import numpy as np
+import pandas as pd
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten
+from tensorflow.keras.layers import Conv2D, MaxPooling2D
+from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
+
+# load data
+data = pd.read_csv("fruits_data.csv")
+
+# preprocessing
+x = np.array(data.iloc[:,:-1])
+y = np.array(data.iloc[:,-1])
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3)
+
+# create image generator for data augmentation
+datagen = ImageDataGenerator(
+        rotation_range=30,
+        width_shift_range=0.2,
+        height_shift_range=0.2,
+        horizontal_flip=True)
+
+# model creation and training
+model = Sequential()
+model.add(Conv2D(32, (3, 3), input_shape=x_train.shape[1:]))
+model.add(Activation("relu"))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Dropout(0.25))
+model.add(Flatten())
+model.add(Dense(128))
+model.add(Activation("relu"))
+model.add(Dropout(0.5))
+model.add(Dense(len(np.unique(y))))
+model.add(Activation("softmax"))
+
+model.compile(loss="sparse_categorical_crossentropy",
+              optimizer="adam",
+              metrics=["accuracy"])
+
+history = model.fit_generator(datagen.flow(x_train, y_train, batch_size=32),
+                              epochs=50,
+                              validation_data=(x_test, y_test),
+                              verbose=2)
+
+# evaluate model performance
+score = model.evaluate(x_test, y_test, verbose=0)
+print("Test loss:", score[0])
+print("Test accuracy:", score[1])
+
+# plot accuracy and loss over epochs
+plt.plot(history.history["accuracy"])
+plt.plot(history.history["val_accuracy"])
+plt.title("Model accuracy")
+plt.ylabel("Accuracy")
+plt.xlabel("Epoch")
+plt.legend(["Train", "Validation"], loc="upper left")
+plt.show()
+
+plt.plot(history.history["loss"])
+plt.plot(history.history["val_loss"])
+plt.title("Model loss")
+plt.ylabel("Loss")
+plt.xlabel("Epoch")
+plt.legend(["Train", "Val
+plt.legend(["Train", "Validation"], loc="upper right")
+plt.show()
+# make predictions on test data
+y_pred = model.predict(x_test)
+
+# convert predictions to class labels
+y_pred_classes = np.argmax(y_pred, axis=1)
+
+# compute confusion matrix to evaluate performance
+from sklearn.metrics import confusion_matrix
+cm = confusion_matrix(y_test, y_pred_classes)
+
+# visualize confusion matrix
+import seaborn as sns
+sns.heatmap(cm, annot=True)
+plt.title("Confusion Matrix")
+plt.xlabel("Predicted Label")
+plt.ylabel("True Label")
+plt.show()
+
+# save the trained model for future use
+model.save("fruit_classifier.h5")
+
+# load the saved model
+loaded_model = keras.models.load_model("fruit_classifier.h5")
+
+# evaluate the loaded model on test data
+loaded_model.compile(loss="sparse_categorical_crossentropy",
+              optimizer="adam",
+              metrics=["accuracy"])
+
+score = loaded_model.evaluate(x_test, y_test, verbose=0)
+print("Test loss:", score[0])
+print("Test accuracy:", score[1])
