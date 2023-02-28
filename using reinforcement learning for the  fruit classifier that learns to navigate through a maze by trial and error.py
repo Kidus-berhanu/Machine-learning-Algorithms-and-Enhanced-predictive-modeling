@@ -1,3 +1,4 @@
+#kidus_berhanu
 import numpy as np
 
 # Fruit class
